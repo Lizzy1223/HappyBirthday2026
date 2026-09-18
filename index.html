@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Happy Birthday · Treasure Hunt</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,.55) 0 3px, transparent 4px),
+      radial-gradient(circle at 80% 30%, rgba(255,255,255,.45) 0 2px, transparent 3px),
+      linear-gradient(135deg, #fff1f7, #f4efff 50%, #eaf8ff);
+    background-size: 120px 120px, 160px 160px, cover;
+    color: #3f3542;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+  }
+
+  .card {
+    width: min(760px, 100%);
+    background: rgba(255,255,255,.94);
+    border-radius: 28px;
+    padding: 42px 38px;
+    box-shadow: 0 20px 60px rgba(90,60,100,.16);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: "🎈  ✨  🎂  ✨  🎈";
+    position: absolute;
+    top: 13px;
+    left: 0;
+    width: 100%;
+    font-size: 19px;
+    opacity: .8;
+    letter-spacing: 14px;
+  }
+
+  .progress {
+    margin: 8px auto 25px;
+    width: 100%;
+    height: 8px;
+    background: #eee7f1;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 14.28%;
+    background: linear-gradient(90deg, #ff8fb3, #a88cf5);
+    border-radius: 20px;
+    transition: width .35s ease;
+  }
+
+  .level {
+    color: #a36b91;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    margin: 0 0 20px;
+    font-size: clamp(27px, 5vw, 42px);
+    color: #744d73;
+  }
+
+  .question {
+    font-size: 18px;
+    line-height: 1.85;
+    text-align: left;
+    white-space: pre-line;
+    margin: 0 auto 26px;
+    max-width: 680px;
+  }
+
+  .question strong { color: #9a4f7c; }
+
+  .gift {
+    display: inline-block;
+    background: #fff3c7;
+    color: #7d6321;
+    border-radius: 999px;
+    padding: 8px 16px;
+    margin: 0 0 22px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  input {
+    width: min(520px, 100%);
+    padding: 15px 18px;
+    border: 2px solid #ded2e1;
+    border-radius: 14px;
+    font-size: 17px;
+    text-align: center;
+    outline: none;
+    transition: .2s;
+  }
+
+  input:focus {
+    border-color: #a88cf5;
+    box-shadow: 0 0 0 4px rgba(168,140,245,.13);
+  }
+
+  button {
+    display: block;
+    margin: 15px auto 0;
+    padding: 13px 32px;
+    border: 0;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #e77da7, #967eea);
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(150,126,234,.25);
+    transition: transform .15s, box-shadow .15s;
+  }
+
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 11px 24px rgba(150,126,234,.32);
+  }
+
+  .message {
+    min-height: 28px;
+    margin-top: 15px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .wrong { color: #d65b71; animation: shake .28s; }
+  .correct { color: #5a9c79; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+  }
+
+  .final {
+    padding-top: 12px;
+  }
+
+  .big-gift {
+    font-size: 76px;
+    margin: 10px 0;
+    animation: float 2.5s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    50% { transform: translateY(-9px) rotate(2deg); }
+  }
+
+  .final-text {
+    font-size: 21px;
+    line-height: 2;
+    white-space: pre-line;
+  }
+
+  .heart {
+    font-size: 30px;
+    margin-top: 18px;
+  }
+
+  @media (max-width: 600px) {
+    .card { padding: 36px 22px; border-radius: 22px; }
+    .question { font-size: 16px; line-height: 1.75; }
+  }
+</style>
+</head>
+
+<body>
+<div class="card">
+  <div id="game"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    text: `人做坏事的时候真的是不嫌麻烦。哈哈哈哈，看老子为了你都做了什么！
+
+老板生日快乐呀。我真的爱你，准备好今年的游戏了吗？
+
+输入Ceilidh和Lydia的生日开始吧，格式MMDDMMDD`,
+    answer: "04030808",
+    gift: ""
+  },
+  {
+    text: `很好，天气这么好，去户外走走吧！
+
+你收到藏宝图了吧，上面标记的5个地方，能找到问题的答案哦。上次整过车站编号，你在网上就能找到信息了，希望你这次也一样好运呀。
+
+先去Stuart Park吧，地图有两个红色圈圈，请问在那里的一个park feature/element，英文是什么呢？
+
+格式A？？？？？？BUILDING&S？？？？？？G？？？，都是大写字母，单词是单数的，中间没有空格，还有一个&字符在中间`,
+    answer: "AMENITYBUILDING&SOCCERGOAL",
+    gift: "礼物提示：AMAZON"
+  },
+  {
+    text: `很好！
+
+礼物提示：AMAZON
+
+下一站在Mortdale，请问左图显示的区域，一共有多少张右图显示的一样椅子呀？`,
+    answer: "3",
+    gift: "礼物提示：AMAZON"
+  },
+  {
+    text: `礼物提示：BOX
+
+下一站去Oatley Park 的入口，新装的这两个门门的牌牌上，是几点关几点reopen呀？
+
+格式就是纯数字，是一位数呢？两位数呢？三位数呢？还是四位数呢？`,
+    answer: "76",
+    gift: "礼物提示：BOX"
+  },
+  {
+    text: `礼物提示：UNDER
+
+下一站去Oleander Reserve咯，你要在黄黄的石头中找金色的牌牌，填入上面的officially opened时间。
+
+格式纯大写字母加数字，中间没有空格`,
+    answer: "OCTOBER2023",
+    gift: "礼物提示：UNDER"
+  },
+  {
+    text: `先给第一个礼物！
+
+20/09/2026 下午5点，全家去Concord吃晚餐呀，你找找51 Majors Bay Rd, Concord NSW 2137附近的停车位哈。
+
+然后回去Olds Park咯。在红圈圈附近我新建了一条路和一盏路灯，路灯上面有个牌牌，请问这盏灯的POLE NO. 是多少呀？`,
+    answer: "37",
+    gift: ""
+  }
+];
+
+let current = 0;
+
+function render() {
+  const game = document.getElementById("game");
+
+  if (current >= questions.length) {
+    game.innerHTML = `
+      <div class="final">
+        <div class="level">🎉 TREASURE FOUND 🎉</div>
+        <div class="big-gift">🎁</div>
+        <h1>Happy Birthday!</h1>
+        <div class="gift">礼物提示：COMPUTER DESK</div>
+        <div class="final-text">我真的爱老板，也真心希望老板玩得开心，
+老婆的爱你感受到了吧？
+
+去拆礼物咯~
+
+Happy Birthday & Happy Everyday!</div>
+        <div class="heart">❤️</div>
+      </div>
+    `;
+    return;
+  }
+
+  const q = questions[current];
+  const progress = ((current + 1) / questions.length) * 100;
+
+  game.innerHTML = `
+    <div class="level">TREASURE HUNT · 第 ${current + 1} 关 / ${questions.length}</div>
+    <div class="progress"><div class="progress-bar" style="width:${progress}%"></div></div>
+    ${q.gift ? `<div class="gift">${q.gift}</div>` : ""}
+    <h1>🔐 Question ${current + 1}</h1>
+    <div class="question">${escapeHtml(q.text)}</div>
+    <input id="answer" type="text" autocomplete="off" spellcheck="false" placeholder="输入答案..." />
+    <button onclick="checkAnswer()">提交答案</button>
+    <div id="message" class="message"></div>
+  `;
+
+  const input = document.getElementById("answer");
+  input.focus();
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") checkAnswer();
+  });
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;"
+  }[c]));
+}
+
+function checkAnswer() {
+  const input = document.getElementById("answer");
+  const message = document.getElementById("message");
+  const userAnswer = input.value.trim();
+
+  if (userAnswer === questions[current].answer) {
+    message.textContent = "✓ 答对啦！准备进入下一关…";
+    message.className = "message correct";
+    input.disabled = true;
+    setTimeout(() => {
+      current++;
+      render();
+    }, 700);
+  } else {
+    message.textContent = "❌ 再试一次！";
+    message.className = "message wrong";
+    input.focus();
+    input.select();
+  }
+}
+
+render();
+</script>
+</body>
+</html>
